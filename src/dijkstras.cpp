@@ -1,13 +1,14 @@
-// Project 4 - Path Finding: dijsktras.cpp
-//
-// Maria H. and Austin G.
-//
-// 3 - 28 - 2023
-//
-// Purpose: to use the Dijkstra's Algorithm to find the lowest weight
-// cost from the runners starting tile to its end tile
-//
-/////////////////////////////////////////////////////////////////////////////
+/********************************************************************************************************************************************************
+    Maria Hernandez 
+    Austin Gilbert
+    COSC302
+    03/29/2023
+    Project4
+    dijkstras.cpp
+    This program uses an adjacency list to represent a graph that symbolizes all possible steps a runner can take to go from 
+    a given starting coordinate to a destination coordinates. 
+    The program implements a Dijkstras algorithm to find the path with the lowest overall cost. 
+***********************************************************************************************************************************************************/
 
 #include <iostream> 
 #include <vector> 
@@ -16,313 +17,190 @@
 
 using namespace std; 
 
-/* Main Execution */
-
-int main(int argc, char *argv[]) {
-
-    // So I want a list of lists..
-    int titles_n; 
-    cin >> titles_n;
-    int col, row, title_cost;
-    char title;
-    map<char, int> titles_costs; // insert values as i go.. This will make the first number pretty much unnecesary I think..
-    map<char, int>::iterator titles_costs_it; 
-
-    for (int i = 0; i < titles_n; i++) {
-        cin >> title >> title_cost;
-        titles_costs.insert(make_pair(title, title_cost));
-    }
-    cin >> row >> col; 
-    // cout << "row " << row << " col " << col; 
-    char titles_matrix[row][col];
-
-    vector <map <int, int> > adjacency_list (row*col);
+/*
+    The following function performs dijkstras algorithm on the graph passed (adjacency_list) to find the shortest path between starting node
+    and destination node.
+*/
+void dijkstras (map<int, int> &marked, map<int, int>::iterator &marked_it, int &node_to_target, int &accumulated_cost_to_target, 
+                int &col, int &start_row, int &start_col, int &end_row, int &end_col, vector <map <int, int> > &adjacency_list) {
+    
+    /*
+        Creating a multimap that will represent our frontier, our frontier would store first the cumulative weight up till that node, 
+        then source node, and then destination node.
+    */
+    multimap <int, vector<int> > frontier; 
+    multimap <int, vector<int> >::iterator frontier_it;
+    int accumulated_cost;
+    int current_node = start_row*col + start_col; 
     map <int, int>::iterator adjacent_edges_it; 
 
+    /* 
+        Adding the first elements to the frontier, which would be nodes adjacent to the current node (starting node) with their respective weights 
+        from the starting node.
+    */
+    for (adjacent_edges_it = adjacency_list.at(current_node).begin(); adjacent_edges_it != adjacency_list.at(current_node).end(); adjacent_edges_it++) {
+        vector<int> edge; 
+        edge.push_back(current_node); 
+        edge.push_back(adjacent_edges_it->first);
+        accumulated_cost = adjacent_edges_it->second;
+        frontier.insert(make_pair(accumulated_cost, edge));
+    }
+
+    // Mark starting node as visited. 
+    marked.insert(make_pair(current_node, current_node));
+
+    // This loop will allow us to loop through our graph until reaching our destination node. 
+    bool loop = true;
+    while (loop) {
+
+        /*
+            We set the frontier_it to point to the beginning of the multimap, then our current node would be the 'destination node' in this 
+            first element of our frontier (the destination node is the second element in the vector representing the value in the multimap, 
+            such vector stores an edge {source node, destination node}). Then, the total cost accumulated up until this destionation node 
+            will be stored in 'value_so_far'. We then erase this element from our frontier. 
+        */
+        frontier_it = frontier.begin(); 
+        current_node = frontier_it->second[1];
+        int value_so_far = frontier_it->first;
+        int source_node = frontier_it->second[0];
+        frontier.erase(frontier_it);
+
+        // If the current node has not been visited, we loop through the nodes adjacent to the current node and add them to our frontier.
+        marked_it = marked.find(current_node);
+        if (marked_it == marked.end()) {
+            for (adjacent_edges_it = adjacency_list.at(current_node).begin(); adjacent_edges_it != adjacency_list.at(current_node).end(); adjacent_edges_it++) {
+                
+                // If we find our destination node, we set our flag "loop" to false to finish the while loop and stop adding more elements to our frontier. 
+                if (adjacent_edges_it->first == (end_row*col+end_col)) loop = false;  
+
+                // If the node adjacent to the current node has not been visited, we proceed to add this edge with its respective cumulative weight to our frontier.
+                marked_it = marked.find(adjacent_edges_it->first); 
+                if (marked_it == marked.end()) { 
+                    vector<int> edge; 
+                    edge.push_back(current_node); 
+                    edge.push_back(adjacent_edges_it->first);
+                    accumulated_cost = value_so_far + adjacent_edges_it->second;
+                    frontier.insert(make_pair(accumulated_cost, edge));
+
+                    /*
+                        If we find our destination node, we store the node from which we reach the destination node (which is current node) into node_to_target, 
+                        and the cumulative cost till this node in 'accumulated_cost_to_target'. 
+                    */
+                    if (adjacent_edges_it->first == (end_row*col+end_col)) { 
+                        node_to_target = current_node; 
+                        accumulated_cost_to_target = accumulated_cost;
+                    }
+
+                    // Mark the current node as visited. 
+                    marked.insert(make_pair(current_node, source_node));
+                }
+            }
+        }
+    }
+}
+
+/* Main Execution */
+int main(int argc, char *argv[]) {
+
+    /*
+        'tiles_n' stores the number of tiles, 'tiles_cost' stores the cost of each tile, 'tiles_costs' stores pairs containing each tile with their cost, and
+        'tile' stores each tile that we will store in our tiles_costs map. 
+    */
+    int tiles_n; 
+    int col, row, tile_cost;
+    char tile;
+    map<char, int> tiles_costs; 
+    map<char, int>::iterator tiles_costs_it; 
+
+    //  Extracting the number of tiles. Then, extracting each tile with its cost and inserting them in the 'tile_costs' map.
+    cin >> tiles_n;
+    for (int i = 0; i < tiles_n; i++) {
+        cin >> tile >> tile_cost;
+        tiles_costs.insert(make_pair(tile, tile_cost));
+    }
+
+    /*
+        Extracting row and col which will give us the size of the matrix (row*col). Then, creating an array of chars representing the 
+        map the runner needs to traverse from source node to destination node, and an adjacency list that will represent a graph containing all 
+        possible steps the runner can take until making it to the destination node. 
+    */
+    cin >> row >> col; 
+    char tiles_matrix[row][col];
+    vector <map <int, int> > adjacency_list (row*col);
+
+    //  Creating the map the runner will traverse. 
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < col; j++) {
-            cin >> title;
-            titles_matrix[i][j] = title;
+            cin >> tile;
+            tiles_matrix[i][j] = tile;
         }
     }
 
+    //  Extracting starting and destination coordinates. 
     int start_row, start_col, end_row, end_col; 
     cin >> start_row >> start_col;
     cin >> end_row >> end_col;
 
-    //cout << "start_row, start_col, end_row, end_col;  " << start_row << " " << start_col << " " << end_row << " " << end_col << endl; 
-    /*
-        0 0
-        3 3
-    */
-    
-   
-    // cout << "titles_costs " << endl;
-    // for (titles_costs_it = titles_costs.begin(); titles_costs_it != titles_costs.end(); titles_costs_it++) {
-    //     cout << titles_costs_it->first << " " << titles_costs_it->second << endl;
-    // }
-
-    // cout << "titles_matrix " << endl;
-    // for (int i = 0; i < row; i++) {
-    //     for (int j = 0; j < col; j++) {
-    //         cout << titles_matrix[i][j] << " ";
-    //     }
-    //     cout << endl;
-    // }
-
-    // To create the adjacency list, we visit left and down... 
-    // map <int, int> temp;
-    // temp.insert(make_pair(0,3));
-
-    // adjacency_list.at(0) = temp;
-    // adjacency_list.at(0).insert(make_pair(0,3));
-    // adjacency_list.at(0).insert(make_pair(1,1));
-
-    // Look for the value of the element at 0 0.. we will add an extra edge for the node 0 kinda like if that node has a path to itself 
-    // See if that's gonna work, worst case scenario just add that weight... 
-    /*
-    (edge,val)
-    0->(0,3)->(1,1)->(5,3)
-    */
-
-    // Creating the graph
-
-    /*
-    h 4
-    m 7
-    r 5
-
-
-
-
-    */
+    //  Creating the adjacency list. 
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < col; j++) {
-            // cout << titles_matrix[i][j] << " ";
-            titles_costs_it = titles_costs.find(titles_matrix[i][j]);
+            tiles_costs_it = tiles_costs.find(tiles_matrix[i][j]);
+    
+            //  Creating an edge from current node to the next node to the right (if it exists).
             if (j < (col-1)) {
-                // titles_costs_it = titles_costs.find(titles_matrix[i][j]);
-                // insert at element i (0 - row-col)
-                adjacency_list.at((col*i + j)).insert(make_pair((col*i + (j+1)), titles_costs_it->second));
-
-                // in the other direction to make it undirected.. 
-                //adjacency_list.at((col*i + (j+1))).insert(make_pair((col*i + j), titles_costs_it->second));
+                adjacency_list.at((col*i + j)).insert(make_pair((col*i + (j+1)), tiles_costs_it->second));
             }
-
+            
+            //  Creating an edge from current node to the next node to the left (if it exists).
             if (j > 0) {
-                adjacency_list.at((col*i + j)).insert(make_pair((col*i + (j-1)), titles_costs_it->second));
+                adjacency_list.at((col*i + j)).insert(make_pair((col*i + (j-1)), tiles_costs_it->second));
             }
-
+            
+            //  Creating an edge from current node to the next node below (if it exists).
             if (i < (row-1)) {
-                // titles_costs_it = titles_costs.find(titles_matrix[i+1][j]);
-                // insert at element i (0 - row-col)
-                adjacency_list.at((col*i + j)).insert(make_pair((col*(i+1) + j), titles_costs_it->second));
-
-                // in the other direction to make it undirected.. 
-                //adjacency_list.at((col*(i+1) + j)).insert(make_pair((col*i + j), titles_costs_it->second));
+                adjacency_list.at((col*i + j)).insert(make_pair((col*(i+1) + j), tiles_costs_it->second));
             }
-
+            
+            //  Creating an edge from current node to the next node up (if it exists).
             if (i > 0) {
-                adjacency_list.at((col*i + j)).insert(make_pair((col*(i-1) + j), titles_costs_it->second));
-            }
-
-        }
-        // cout << endl;
-    }
-
-    // Print to verify it's working... 
-    // cout << "ADJACENCY LIST " << endl;
-    // for (int i = 0; i < adjacency_list.size(); i++) {
-    //     cout << "i " << i << "->";
-    //     for (adjacent_edges_it = adjacency_list.at(i).begin(); adjacent_edges_it != adjacency_list.at(i).end(); adjacent_edges_it++) {
-    //         cout << "(" << adjacent_edges_it->first << " " << adjacent_edges_it->second << ") ";
-    //     }
-    //     cout << endl;
-    // }
-
-
-
-    multimap <int, vector<int> > frontier; 
-    multimap <int, vector<int> >::iterator frontier_it; 
-    map<int, int> marked; // DESTINATION SOURCE
-    map<int, int>::iterator marked_it; 
-    int accumulated_cost;
-
-
-
-
-    int current_node = start_row*col + start_col; // give another name to this later... ???????????????????????
-   // for (int i = 0; i < adjacency_list.size(); i++) {
-        //cout << "i " << i << "->";
-        for (adjacent_edges_it = adjacency_list.at(current_node).begin(); adjacent_edges_it != adjacency_list.at(current_node).end(); adjacent_edges_it++) {
-            vector<int> edge; 
-            edge.push_back(current_node); // 0 ??????? name...
-            edge.push_back(adjacent_edges_it->first);
-            //titles_costs_it = titles_costs.find(titles_matrix[start_row][start_col]);
-            accumulated_cost = adjacent_edges_it->second;
-            //accumulated_cost = 0;/*titles_costs_it->second + adjacent_edges_it->second;*/
-            frontier.insert(make_pair(accumulated_cost, edge));
-        }
-
-        marked.insert(make_pair(current_node, current_node));
-   // }
-
-    //  multimap <int, vector<int> > frontier; 
-//     cout << "\nFRONTIER\n\n";
-//     for (frontier_it = frontier.begin(); frontier_it != frontier.end(); frontier_it++) {
-//         cout << "(" << frontier_it->first;
-//         for (int i = 0; i < frontier_it->second.size(); i++) {
-//             cout << " " << frontier_it->second.at(i);
-//         }
-//         cout << ") ";
-//     }
-
-//   cout << "\nMARKEEEED.... hey \n\n";
-//     for (marked_it = marked.begin(); marked_it != marked.end(); marked_it++) {
-//             cout << "{" << marked_it->first;
-//                 cout << " : " << marked_it->second;
-//                 cout << "} ";
-//         }
-
-
-
-
-    // while......???!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    // It's like getting stop in an infinite loop... but Im close, I feel.. 
-bool loop = true;
-//multimap <int, vector<int> >::iterator target_it; 
-int node_to_target; 
-int accumulated_cost_to_target;
-while (loop) {
-    frontier_it = frontier.begin(); 
-    // current node is destination node in the first element of the frontier
-    current_node = frontier_it->second[1];
-    int value_so_far = frontier_it->first;
-    //cout << "\n\nVALUEEEEE SO FARRR " << value_so_far << endl;
-    int source_node = frontier_it->second[0];
-    frontier.erase(frontier_it);
-    //int current_node = 0; // give another name to this later... ???????????????????????
-
-   // for (int i = 0; i < adjacency_list.size(); i++) {
-        //cout << "i " << i << "->";
-
-        marked_it = marked.find(current_node);
-  if (marked_it == marked.end()) {
-    //cout << "\n\n CURREEEEEENT NODDDEEE " << current_node << endl;
-   ////////////////////////////////// // vector <map <int, int> > adjacency_list (row*col);
-        for (adjacent_edges_it = adjacency_list.at(current_node).begin(); adjacent_edges_it != adjacency_list.at(current_node).end(); adjacent_edges_it++) {
-
-            if (adjacent_edges_it->first == (end_row*col+end_col)) {
-                loop = false;  // HARD CODEEEEEE. CHANGEEEEE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            }
-             marked_it = marked.find(adjacent_edges_it->first); //????????????????????????????**********************************
-            // if not marked....
-             if (marked_it == marked.end()) { //????????????????????????????**********************************
-                vector<int> edge; 
-                edge.push_back(current_node); // 0 ??????? name...
-                edge.push_back(adjacent_edges_it->first);
-                accumulated_cost = value_so_far + adjacent_edges_it->second;
-                frontier.insert(make_pair(accumulated_cost, edge));
-                if (adjacent_edges_it->first == (end_row*col+end_col)) { // HARD CODEEEEEE. CHANGEEEEE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    // titles_costs_it = titles_costs.find(titles_matrix[end_row][end_col]);
-                    //cout << "\n\nFOUUUUUNDDDDDDDDDDDDDDD " << end_row << " " << end_col << endl; 
-                    node_to_target = current_node; 
-                    accumulated_cost_to_target = accumulated_cost;
-                    // accumulated_cost_to_target = accumulated_cost - titles_costs_it->second;
-                    //cout << " !!!!!!!node_to_target " << node_to_target << " accumulated_cost_to_target " << accumulated_cost_to_target;
-                }
-        //cout << "TOTAAAAAAL COSTTT " << accumulated_cost << endl;
-                marked.insert(make_pair(current_node, source_node));
+                adjacency_list.at((col*i + j)).insert(make_pair((col*(i-1) + j), tiles_costs_it->second));
             }
         }
-
-
-
     }
-    // else {
-    //     cout << "\n\nALREADY VISTED \n\n" << endl;
-    // }
-    //     cout << "\nFRONTIER \n\n";
-    //     for (frontier_it = frontier.begin(); frontier_it != frontier.end(); frontier_it++) {
-    //         cout << "(" << frontier_it->first;
-    //         for (int i = 0; i < frontier_it->second.size(); i++) {
-    //             cout << " " << frontier_it->second.at(i);
-    //         }
-    //         cout << ") ";
-    //     }
-
-
-    //     cout << "\nMARKEEEED \n\n";
-    // for (marked_it = marked.begin(); marked_it != marked.end(); marked_it++) {
-    //         cout << "{" << marked_it->first;
-    //             cout << " : " << marked_it->second;
-    //             cout << "} ";
-    //     }
-
-       // if (adjacent_edges_it->first == (end_row*col+end_col)) break;
-}
-
-
-//cout << " !!!!!!!node_to_target " << node_to_target << " accumulated_cost_to_target " << accumulated_cost_to_target;
-
-list<int> path; 
-list<int>::iterator path_it;
-
-marked_it = marked.find(node_to_target);
-
-// HARD CODEEEEEE. CHANGEEEEE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-path.push_front (end_row*col+end_col);
-path.push_front(marked_it->first);
-while (true) {
-    marked_it = marked.find(marked_it->second);
-    path.push_front(marked_it->first);
-    if (marked_it->first == start_row*col+start_col) {
-        // cout << "wepaa " << marked_it->first << endl; 
-        break;
-    }
-}
-
-// cout << "LISSSSSSSTTTTTT PATH " << endl;
-// for (path_it = path.begin(); path_it != path.end(); path_it++) {
-//     cout << *path_it << " ";
-// }
-
-cout << accumulated_cost_to_target << endl; 
-for (path_it = path.begin(); path_it != path.end(); path_it++) {
-    cout << *path_it/col << " " << *path_it%col << endl; 
-}
-
-// map<int, int>::iterator marked_it; 
-
-
-
-
-// int min_cost_till_target
-//  target_it = frontier.find(accumulated_cost);
-
-    // Then add the pair.. I can literally just male two pairs for these two.. 
-
-
-//cout << "wepusss" << endl; 
-
-
-
-
-// at the end.....
-    //    for (marked_it = marked.begin(); marked_it != marked.end(); marked_it++) {
-    //         cout << "{" << marked_it->first;
-    //             cout << " : " << marked_it->second;
-    //             cout << "} ";
-    //     }
-
-
-   
 
     /*
-    (edge,val)
-    0->(0,3)->(1,1)->(5,3)
+        Creating a 'marked_it' map that will store our visited nodes, each pair of this map will be {destination node (node visited), 
+        source node}. Then, creating the variable 'node_to_target', which represents the node in the path that connects to the target 
+        node and 'accumulated_cost_to_target', which stores the total cost up until reaching the destination node.
     */
+    map<int, int> marked; 
+    map<int, int>::iterator marked_it; 
+    int node_to_target; 
+    int accumulated_cost_to_target;
 
+    // Call dijkstras function.
+    dijkstras(marked, marked_it, node_to_target, accumulated_cost_to_target, col, start_row, start_col, end_row, end_col, adjacency_list);
+
+    // Creating a list that will have the shortest path from source node to destination node. 
+    list<int> path; 
+    list<int>::iterator path_it;
+    marked_it = marked.find(node_to_target);
+
+    // Push front the destination node and the node that points to this node to the list.
+    path.push_front(end_row*col+end_col);
+    path.push_front(marked_it->first);
+
+    // While we have not found the starting node, we use our 'marked' map to backtrack the shortest path till the destination node.
+    while (true) {
+        marked_it = marked.find(marked_it->second);
+        path.push_front(marked_it->first);
+        if (marked_it->first == start_row*col+start_col) break;
+    }
+
+    // Finally, we print the total cost till the destination node and the coordinates of the shortest path from starting node to destination node. 
+    cout << accumulated_cost_to_target << endl; 
+    for (path_it = path.begin(); path_it != path.end(); path_it++) {
+        cout << *path_it/col << " " << *path_it%col << endl; 
+    } 
     return 0;
 }
