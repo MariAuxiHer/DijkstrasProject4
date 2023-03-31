@@ -1,12 +1,16 @@
 CXX=		g++
 CXXFLAGS=	-g -Wall -std=gnu++11
 SHELL=		bash
-PROGRAMS=	src/dijkstras
+PROGRAMS=	src/dijkstras	src/generate_map
 
-all:		src/dijkstras
+all:		$(PROGRAMS)
 
 dijkstras:	src/dijkstras.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^
+
+src/generate_map:	src/generate_map.py
+	chmod +x src/generate_map.py
+	cp src/generate_map.py src/generate_map
 
 .PHONY:		test test-output test-memory clean
 

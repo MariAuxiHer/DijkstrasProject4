@@ -1,0 +1,73 @@
+Student: Maria A. Hernandez R.
+
+1. Individual Contributions:
+- I helped Austin in the code portion that extracts data from standard input and creates the graph using an adjacency list.
+- I worked together with Austin to develop the Dijkstras' algorithm using a multimap as the frontier.
+- I debugged code and commented/formatted it.
+- I worked together with Austin on the generate_map.py script.
+- I updated the Makefile to generate an executable for our python script.
+
+
+2. About our generate_map.py file and how to run it:
+
+- Our python file automates the benchmarking for our dijkstras path finding component recording the elapsed time and memory usage. 
+If the only command line argument is the name of the executable, our program generates 7 txt files (for N = 10, 20, 50, 100, 200, 500, 
+and 1000) each with NxN map of random tiles, then automates benchmarking for each of these (run 5 trials to calculate time elapsed and 
+5 trials to calculate memory usage and then average the results). If one additional command line argument is provided (N), we generate 
+one txt file with NxN map of random tiles (this N provided in the command line needs to be an integer). If the user provides more than 
+two command line arguments, our program immediately terminates. 
+
+- To measure the time elapsed, we used the time() function from the python's time module, and call a subprocess that runs our dijkstras 
+component. We run 5 trials per N and average the time elapsed. 
+
+- To measure the memory usage we call a subprocess that runs Valgrind on our dijkstras component. After running valgrind, the program looks 
+for the line in valgrind's output that says "total heap usage" and the memory usage would be the bytes allocated. We run 5 trials per N and 
+average the memory usage. 
+Caveat: Since we are running valgrind in a subrpocess from our python file to benchmark the memory usage, it takes a long time to run the 
+five trials for N = 1000. Thus, even though the input1000x1000.txt file should be generated fairly quickly, it will take a long time to 
+get the results of the benchmarking for N = 1000. 
+
+- For our codes to work we need a data/ and a src/ directory inside a parent directory. The Makefile is supposed to be in the parent 
+directory, and it would generate two executables dijkstras and generate_map inside the src/ directory when running make in the parent 
+directory. Our generate_map should work if run from the parent directory by running ./src/generate_map or ./src/generate_map N, or 
+if run from the src/ directory by running ./generate_map or ./generate_map N. When running any of these commands, our generate_map 
+executable will create the specified input file(s) in the data/ directory. 
+
+
+3. Answer to questions: 
+3.1. How did you represent the map as a graph?
+
+Explain which graph representation you used and how you determined the relationship between vertices include the edges and their weights.
+
+We use an adjacency list. To represent the list, we use a vector of maps, where the indexes of the vector represent the vertices, 
+the key in our map represent the destination vertex and the value represents the weight between the source vertex (current vertex / index) 
+and the destination vertex. Our cost map gives us the weight to leave each vertex/cell. To construct the edges, we join the current vertex 
+(cell in the grid) with the vertices that are right, down, up, and left (if these vertices exist). 
+
+3.2. What is the complexity of your implementation of Dijkstra's Algorithm?
+
+Explain this by describing which data structures you used and how you used them to implement path finding.
+
+Runtime complexity: O(E log E)
+The data structure we used to represent our frontier is a multimap. The key of the multimap represents the cumulative value till that 
+vertex from the starting vertex and the value is a vector of size two where the first element of the vector is the source vertex 
+(current vertex) and the second element is the destination vertex (one of the vertices adjacent to the current vertex). We first add the 
+first elements to the frontier, which are the vertices adjacent to the current vertex (starting vertex) with their respective weights. 
+Then, we set the frontier_it to point to the beginning of the multimap, our current vertex would be the 'destination vertex' in this first 
+element of our frontier. We then erase this element from our frontier. If the current vertex has not been visited, we loop through the 
+vertices adjacent to the current vertex. If the vertex adjacent to the current vertex has not been visited, we proceed to add this edge 
+with its respective cumulative weight to our frontier. Then, we mark the current vertex as visited. All this procedure has a time 
+complexity of O(E log E), where E is the number of edges. This is because this Dijkstra's algorithm visits each vertex and edge at most 
+once, and at each vertex, it inserts the edges between the current vertex and the vertices adjacent to the current vertex into the multimap. 
+Each insertion and deletion in the multimap takes O(log E) time, so the overall time complexity of the algorithm is O(E log E). 
+
+3.3. How well does your implementation scale?
+
+Explain what effect did N (ie. the size of the map) have on the performance of your dijkstras path finding component in terms of execution time and memory usage?
+
+The time elapsed and bytes allocated gradually increase as the size of the map N increases. The percentage increase regarding time elapsed 
+from one input N to the next one is average above 300%, but it increased the most from a map of size 500x500 to a map of size 1000x10000 
+(with a percentage increase of ~340%). The percentage increase regarding memory usage from one input to another is on average ~270%, 
+increasing the most (~300%) from N = 500 to N = 1000. The multimap implementation most probably has a higher overhead in terms of memory 
+usage than a binary heap implementation. However in general, Dijkstra's algorithm implementation using an adjacency list as the graph and 
+a multimap as the frontier provides a reasonable balance between time and space efficiency.

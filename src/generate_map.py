@@ -1,7 +1,8 @@
+#!/usr/bin/env python
 #    Maria Hernandez 
 #    Austin Gilbert
 #    COSC302
-#    03/29/2023
+#    03/31/2023
 #    Project4
 #    generate_map.py
 #    This program generates NxN maps of random tiles, with the following values of N: 10, 20, 50, 100, 200, 500, 1000
@@ -13,6 +14,7 @@ from numpy import random
 import os, subprocess
 from time import time
 import re
+import sys
 
 # Function to generate NxN maps of random tiles
 def input_generator(number_inputs):
@@ -107,14 +109,37 @@ def benchmark():
     print(f"|{'-'*15}|{'-'*15}|{'-'*18}|") 
 
 if __name__ == "__main__":
-    n = "N"
-    elapsed_time = "Elapsed Time"
-    memory_usage = "Memory Usage"
-    print(f"| {n:<14}| {elapsed_time:<14}| {memory_usage:<17}|")
-    print(f"|{'-'*15}|{'-'*15}|{'-'*18}|") 
 
+    # Changing current working directory to the directory where this script is located.
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+    # Getting all the command-line arguments passed to the Python script.
+    args = sys.argv
+    num_of_args = len(args)
+
+    # If you want to generate all the files at once (all maps with different NxN sizes), and then benchmark them:. 
+    if num_of_args == 1:
     # Create an array with the the following N inputs: 10, 20, 50, 100, 200, 500, 1000
     # and call the input_generator function inside a for loop passing one input per iteration.
-    arr = np.array([10, 20, 50, 100, 200, 500, 1000])
-    for number_inputs in arr:
+        n = "N"
+        elapsed_time = "Elapsed Time"
+        memory_usage = "Memory Usage"
+        print(f"| {n:<14}| {elapsed_time:<14}| {memory_usage:<17}|")
+        print(f"|{'-'*15}|{'-'*15}|{'-'*18}|") 
+        arr = np.array([10, 20, 50, 100, 200, 500, 1000])
+        for number_inputs in arr:
+            input_generator(number_inputs)
+
+    # If you want to generate each file individually (each map of size NxN separately), and then benchmark it: 
+    elif num_of_args == 2:
+        n = "N"
+        elapsed_time = "Elapsed Time"
+        memory_usage = "Memory Usage"
+        print(f"| {n:<14}| {elapsed_time:<14}| {memory_usage:<17}|")
+        print(f"|{'-'*15}|{'-'*15}|{'-'*18}|") 
+        number_inputs = int(args[1])
         input_generator(number_inputs)
+    
+    # If provided more than two command line arguments:
+    else: 
+        sys.exit(1)
