@@ -7,7 +7,6 @@ GitHub Repo Link: https://github.com/MariAuxiHer/DijkstrasProject4.git
 1. Markdown table
 
 | N             | Elapsed Time  | Memory Usage    |
-|---------------|---------------|-----------------|
 | 10            | 0.0022 seconds| 127044 bytes    |
 |---------------|---------------|-----------------|
 | 20            | 0.0037 seconds| 260120 bytes    |
