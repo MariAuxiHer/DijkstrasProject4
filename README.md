@@ -15,7 +15,7 @@ GitHub Repo Link: https://github.com/MariAuxiHer/DijkstrasProject4.git
 | 200           | 0.2538 seconds| 18250688 bytes  |
 | 500           | 1.7417 seconds| 113904844 bytes |
 | 1000          | 7.6277 seconds| 455725332 bytes |
-|---------------|---------------|-----------------|
+|               |               |                 |
 
 
 2. About our generate_map.py file and how to run it:
